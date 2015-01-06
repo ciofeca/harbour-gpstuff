@@ -1,0 +1,9 @@
+# Add newest entries to the top of the list.
+# * date Author's Name <author's email> version-release
+# - Summary of changes
+
+* Mon Jan 06 2015 Alfonso Martone <alfonso.martone@gmail.com> 0.8-39
+- upgrade to SailfishOS 1.1 (SDK 1412), still requires manual installation of libQt5Positioning
+
+* Tue Nov 04 2014 Alfonso Martone <alfonso.martone@gmail.com> 0.1-8
+- it works! let's wait for libQt5Positioning enabled in Jolla...

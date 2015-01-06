@@ -1,0 +1,31 @@
+Name: harbour-gpstuff
+Summary: GPStuff
+Version: 0.8
+Release: 39
+Group: Location/Location Adaptation
+URL: http://particolarmente-urgentissimo.blogspot.com
+License: GPL
+Sources:
+- '%{name}-%{version}.tar.bz2'
+Description: |
+  GPS logger: shows/collects positioning data, also in background, can save in a textfile.
+Configure: none
+Builder: qtc5
+
+PkgConfigBR:
+  - sailfishapp >= 1.0.9
+  - Qt5Core
+  - Qt5Qml
+  - Qt5Quick
+  - Qt5Positioning
+
+Requires:
+  - qt5-qtlocation >= 5.2
+
+Files:
+  - '%{_bindir}'
+  - '%{_datadir}/%{name}'
+  - '%{_datadir}/applications/%{name}.desktop'
+  - '%{_datadir}/icons/hicolor/86x86/apps/%{name}.png'
+
+#---
