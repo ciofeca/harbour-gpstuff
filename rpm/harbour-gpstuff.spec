@@ -14,7 +14,7 @@ Name:       harbour-gpstuff
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    GPStuff
 Version:    0.8
-Release:    39
+Release:    48
 Group:      Location/Location Adaptation
 License:    GPL
 URL:        http://particolarmente-urgentissimo.blogspot.com
@@ -42,7 +42,8 @@ GPS logger: shows/collects positioning data, also in background, can save in a t
 # >> build pre
 # << build pre
 
-%qtc_qmake5 
+%qtc_qmake5  \
+    VERSION='%{version}-%{release}'
 
 %qtc_make %{?_smp_mflags}
 

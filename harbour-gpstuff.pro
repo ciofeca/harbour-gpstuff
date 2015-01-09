@@ -1,6 +1,7 @@
 TARGET       = harbour-gpstuff
 CONFIG      += sailfishapp
 QT          += quick positioning
+DEFINES     += APP_VERSION=\"\\\"$${VERSION}\\\"\"
 SOURCES     += src/harbour-gpstuff.cpp
 HEADERS     += src/harbour-gpstuff.h
 OTHER_FILES += qml/harbour-gpstuff.qml     \

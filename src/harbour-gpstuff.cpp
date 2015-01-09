@@ -21,10 +21,11 @@
 
 int main(int argc, char *argv[])
 {
-    QString name("GPStuff"), org("Alfonso Martone"),
+    QString name("GPStuff"), vers(APP_VERSION), org("Alfonso Martone"),
             prov(PROVIDER), path("qml/harbour-gpstuff.qml");
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
     app->setApplicationName(name);
+    app->setApplicationVersion(vers);
     app->setOrganizationName(org);
     Position gps(app->screens().first()->availableSize().width());
     QScopedPointer<QQuickView> view(SailfishApp::createView());

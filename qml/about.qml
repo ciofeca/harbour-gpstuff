@@ -53,7 +53,7 @@ Page
             spacing: Theme.paddingMedium
             PageHeader
             {
-                title: "About GPStuff"
+                title: "GPStuff "+Qt.application.version
             }
 
             Label {
