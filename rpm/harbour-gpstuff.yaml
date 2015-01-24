@@ -13,7 +13,9 @@ Configure: none
 Builder: qtc5
 
 QMakeOptions:
+- APPNAME='%{name}'
 - VERSION='%{version}-%{release}'
+- AUTHOR='Alfonso_Martone'
 
 PkgConfigBR:
   - sailfishapp >= 1.0.9

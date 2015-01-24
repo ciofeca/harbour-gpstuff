@@ -21,8 +21,8 @@
 
 int main(int argc, char *argv[])
 {
-    QString name("GPStuff"), vers(APP_VERSION), org("Alfonso Martone"),
-            prov(PROVIDER), path("qml/harbour-gpstuff.qml");
+    QString name(APP_NAME), vers(APP_VERSION), org(APP_AUTHOR),
+            prov(PROVIDER), path("qml/" APP_NAME ".qml");
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
     app->setApplicationName(name);
     app->setApplicationVersion(vers);

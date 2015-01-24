@@ -43,7 +43,9 @@ GPS logger: shows/collects positioning data, also in background, can save in a t
 # << build pre
 
 %qtc_qmake5  \
-    VERSION='%{version}-%{release}'
+    APPNAME='%{name}' \
+    VERSION='%{version}-%{release}' \
+    AUTHOR='Alfonso_Martone'
 
 %qtc_make %{?_smp_mflags}
 
