@@ -21,10 +21,10 @@ Page
 
             MenuItem
             {
-                signal savefile()
+                signal save()
                 text: qsTr("Save textfile into Documents")
                 enabled: GPS.recs>0
-                onClicked: GPS.savefile(0)
+                onClicked: GPS.save(0)
             }
 
             MenuItem
@@ -52,7 +52,7 @@ Page
             spacing: Theme.paddingLarge
 
             PageHeader
-            {
+             {
                 title: GPS.run ? qsTr("GPS logging: ")+GPS.recs : qsTr("GPS stopped: ")+GPS.recs
             }
 

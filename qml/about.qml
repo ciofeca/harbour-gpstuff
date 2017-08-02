@@ -21,7 +21,7 @@ Page
         {
             service: "Blog"
             name: "particolarmente urgentissimo"
-            url: "http://particolarmente-urgentissimo.blogspot.com"
+            url: "https://particolarmente-urgentissimo.blogspot.com"
         }
 
         ListElement
@@ -121,7 +121,7 @@ and <i>graph</i> plot of the collected position data (green pixels, or white if 
 <li>you can switch mode flicking to the left; flicking to the right suspends/restarts position logging.</li>
 </ul>
 <div align='center'><b><i>Where is stored positioning data?</i></b></div>
-<ul><li>in an array in RAM (up to 24 hours): you will lose that data if you forget to save to a file
+<ul><li>to an array in RAM (up to 99999 records): you will lose that data if you forget to save to a file
 (autosaving is not privacy-compliant);</li>
 <li>saved files go always in the <i>Documents</i> directory;</li>
 <li>invalid values will always be zero.</li>

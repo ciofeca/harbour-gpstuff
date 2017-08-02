@@ -21,10 +21,10 @@ Page
 
             MenuItem
             {
-                signal savefile()
-                text: qsTr("Save CSV file into Documents")
+                signal save()
+                text: qsTr("Save TXT file into Documents")
                 enabled: GPS.recs>0
-                onClicked: GPS.savefile(1)
+                onClicked: GPS.save(0)
             }
 
             MenuItem

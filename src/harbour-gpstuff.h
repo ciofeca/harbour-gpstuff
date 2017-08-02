@@ -4,15 +4,19 @@
 #define HARBOURGPSTUFF_H
 
 #define SUBVIEWS    4              // total variants in cover.qml
-#define MAXRECORDS  24*60*60       // archive size: 24 hours continuous
-#define REFRESHING  5              // seconds before map-refresh
+#define MAXRECORDS  99999          // archive size: more than 24 hours continuous
+#define REFRESHING  4              // seconds before map-refresh
 #define MINALT      -100           // min acceptable altitude (meters)
 #define MAXALT      21111.111      // max acceptable altitude (meters)
 #define MINSPD      0              // min acceptable speed (m/s)
 #define MAXSPD      533.33333      // max acceptable speed (1920 km/h)
+#define EXCLUDED_FAKE_POSITIONS  3 // Sailfish GPS apparently warms up with up to 3 fake positions
 
 #define PROVIDER    "x"            // image provider used in data.qml
 #define IMGLATLON   "image://" PROVIDER "/1"
+
+#define SAVETEXT    ".txt"
+#define SAVEGPX     ".gpx"         // not yet supported
 
 #include <QDebug>
 #include <QObject>
@@ -46,16 +50,13 @@ public:
 
     bool isValid() { return tim != 0; }
 
-    void tabsave(QTextStream& s) {
-        QString q("%1\t%2\t%3\t%4\t%5\t%6\t%7\t%8\t%9\t%10\n");
-        s << q.arg(tim).arg(lat,0,'f',7).arg(lon,0,'f',7).arg(spd,0,'f',1).
-             arg(alt).arg(sat).arg(hac,0,'f',1).arg(vac,0,'f',1).arg(head).arg(flags);
-    }
-
-    void csvsave(QTextStream& s) {
-        QString q("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10\r\n");
-        s << q.arg(tim).arg(lat,0,'f',7).arg(lon,0,'f',7).arg(spd,0,'f',1).
-             arg(alt).arg(sat).arg(hac,0,'f',1).arg(vac,0,'f',1).arg(head).arg(flags);
+    void save(QTextStream& s, const char sep='\t', const char* endstr="\n")
+    {
+        QString q("%1%2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20");
+        s << q.arg(tim).arg(sep).arg(lat,0,'f',7).arg(sep).arg(lon,0,'f',7).arg(sep).
+             arg(spd,0,'f',1).arg(sep).arg(alt).arg(sep).arg(sat).arg(sep).
+             arg(hac,0,'f',1).arg(sep).arg(vac,0,'f',1).arg(sep).
+             arg(head).arg(sep).arg(flags).arg(endstr);
     }
 };
 
@@ -166,12 +167,17 @@ public slots:
     void coverSubview();
     void startstop();
     void bookmark();
-    void savefile(int flags);
+    void save(int flags=0);
     void resetFlash() { setFlash(false); }
     void positionUpdated(const QGeoPositionInfo &info);
     void satellitesInUseUpdated(const QList<QGeoSatelliteInfo>& info);
     void satellitesInViewUpdated(const QList<QGeoSatelliteInfo>& info);
 };
+
+
+// special characters used for GPS satellites ON/OFF strings:
+#define GON  "\xe2\x97\x8f"
+#define GOFF "\xe2\x97\x8b"
 
 
 #endif // HARBOURGPSTUFF_H

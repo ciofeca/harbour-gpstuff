@@ -13,11 +13,11 @@ Name:       harbour-gpstuff
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    GPStuff
-Version:    0.8
-Release:    48
+Version:    0.9
+Release:    7
 Group:      Location/Location Adaptation
 License:    GPL
-URL:        http://particolarmente-urgentissimo.blogspot.com
+URL:        https://particolarmente-urgentissimo.blogspot.com
 Source0:    %{name}-%{version}.tar.bz2
 Source100:  harbour-gpstuff.yaml
 Requires:   qt5-qtlocation >= 5.2

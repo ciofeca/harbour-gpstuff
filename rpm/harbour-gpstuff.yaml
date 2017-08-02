@@ -1,14 +1,14 @@
 Name: harbour-gpstuff
 Summary: GPStuff
-Version: 0.8
-Release: 48
+Version: 0.9
+Release: 7
 Group: Location/Location Adaptation
-URL: http://particolarmente-urgentissimo.blogspot.com
+URL: https://particolarmente-urgentissimo.blogspot.com
 License: GPL
 Sources:
 - '%{name}-%{version}.tar.bz2'
 Description: |
-  GPS logger: shows/collects positioning data, also in background, can save in a textfile.
+  GPS logger: shows/collects positioning data, also in background, can save to a textfile.
 Configure: none
 Builder: qtc5
 

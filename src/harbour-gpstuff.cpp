@@ -13,13 +13,14 @@
 #include <QQuickView>
 #include <QQmlContext>
 #include <QScreen>
+#include <QStandardPaths>
 
 #include <sailfishapp.h>
 
 #include "harbour-gpstuff.h"
 
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])  // typical SailfishApp create/view/exec initialization
 {
     QString name(APP_NAME), vers(APP_VERSION), org(APP_AUTHOR),
             prov(PROVIDER), path("qml/" APP_NAME ".qml");
@@ -27,7 +28,10 @@ int main(int argc, char *argv[])
     app->setApplicationName(name);
     app->setApplicationVersion(vers);
     app->setOrganizationName(org);
+
+    // the constructor expects a vertically-aligned display width:
     Position gps(app->screens().first()->availableSize().width());
+
     QScopedPointer<QQuickView> view(SailfishApp::createView());
     view->setTitle(name);
     view->engine()->addImageProvider(prov, &gps);
@@ -35,7 +39,7 @@ int main(int argc, char *argv[])
     view->setSource(SailfishApp::pathTo(path));
     view->show();
     view->showFullScreen();
-    exit(app->exec());       // arrrgh, because of requestImage QImage bugggg!
+    exit(app->exec());       // arrrgh, because of a requestImage QImage bugggg!
     return 0;
 }
 
@@ -48,7 +52,7 @@ Position::Position(int wid, QObject* parent):
 {
     gpsdata = new GPSdata[MAXRECORDS];
     setImg(IMGLATLON);
-    wg = wid;
+    wg = wid;                // a 4:3 area; works best on vertical displays
     hg = (wg/4)*3;
     startuptime = QDateTime::currentDateTime();
     uptime.start();
@@ -85,7 +89,7 @@ Position::Position(int wid, QObject* parent):
 }
 
 
-QString Position::elapsed()
+QString Position::elapsed()  // current date/time and elapsed time
 {
     qint64 e = uptime.elapsed();
     int min = e/60000;
@@ -116,7 +120,7 @@ void Position::startstop()
 }
 
 
-void Position::coverSubview()
+void Position::coverSubview()   // switch to next Cover subview
 {
     int nxt = m_subv;
     if(++nxt >= SUBVIEWS) nxt = 0;
@@ -124,7 +128,7 @@ void Position::coverSubview()
 }
 
 
-void Position::positionUpdated(const QGeoPositionInfo &info)
+void Position::positionUpdated(const QGeoPositionInfo &info)  // validate and update
 {
     double r, lat, lon;
     if(info.coordinate().isValid())
@@ -138,13 +142,13 @@ void Position::positionUpdated(const QGeoPositionInfo &info)
         setLon(floor(lon*1000000.0)/1000000.0);
 
         r = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
-        if(isnormal(r) && r>0.0 && r<9999.555) m_hac=r; else m_hac=0.0;
+        if(std::isnormal(r) && r>0.0 && r<9999.555) m_hac=r; else m_hac=0.0;
         r = info.attribute(QGeoPositionInfo::VerticalAccuracy);
-        if(isnormal(r) && r>0.0 && r<9999.555) m_vac=r; else m_vac=0.0;
+        if(std::isnormal(r) && r>0.0 && r<9999.555) m_vac=r; else m_vac=0.0;
         last().hac = m_hac, last().vac = m_vac;
 
         r = info.coordinate().altitude();
-        if(isnormal(r) && r>=MINALT && r<MAXALT)
+        if(std::isnormal(r) && r>=MINALT && r<MAXALT)
         {
             setAlt((int)r);
             setAltx(m_alt);
@@ -152,7 +156,7 @@ void Position::positionUpdated(const QGeoPositionInfo &info)
         }
 
         r = info.attribute(QGeoPositionInfo::GroundSpeed);
-        if(isnormal(r) && r>=MINSPD && r<MAXSPD)
+        if(std::isnormal(r) && r>=MINSPD && r<MAXSPD)
         {
             setSpd(floor(r*36.0)/10.0);  // m/s ---> km/h
             setSpdx(m_spd);
@@ -162,8 +166,9 @@ void Position::positionUpdated(const QGeoPositionInfo &info)
         last().sat = m_sats;
 
         r = info.attribute(QGeoPositionInfo::MagneticVariation);
-        if(isnormal(r))
+        if(std::isnormal(r))
         {
+            // note: as of June 2015, Sailfish OS does not yet support heading
             setHead((int)r);
             int u = (int)((r-22.5)/45.0);
             switch(u)
@@ -188,7 +193,7 @@ void Position::positionUpdated(const QGeoPositionInfo &info)
                 setRecs(m_recs + 1);
                 if(0 == (m_recs % REFRESHING))
                 {
-                    setImg("");
+                    setImg("");         // force update
                     setImg(IMGLATLON);
                 }
             }
@@ -200,14 +205,14 @@ void Position::positionUpdated(const QGeoPositionInfo &info)
 void Position::satellitesInUseUpdated(const QList<QGeoSatelliteInfo>& info)
 {
     setSats(info.size());
-    QString q = "●●●●●";
+    QString q = GON GON GON GON GON;
     switch(m_sats)
     {
-    case 0: q = "○○○○○"; break;
-    case 1: q = "●○○○○"; break;  // ◍
-    case 2: q = "●●○○○"; break;
-    case 3: q = "●●●○○"; break;
-    case 4: q = "●●●●○"; break;
+    case 0: q = GOFF GOFF GOFF GOFF GOFF; break;
+    case 1: q = GON  GOFF GOFF GOFF GOFF; break;
+    case 2: q = GON  GON  GOFF GOFF GOFF; break;
+    case 3: q = GON  GON  GON  GOFF GOFF; break;
+    case 4: q = GON  GON  GON  GON  GOFF; break;
     }
     setSat(QString(q.append(" (%1/%2)").arg(m_sats).arg(m_satv)));
 }
@@ -216,22 +221,22 @@ void Position::satellitesInUseUpdated(const QList<QGeoSatelliteInfo>& info)
 void Position::satellitesInViewUpdated(const QList<QGeoSatelliteInfo> &info)
 {
     setSatv(info.size());
-    QString q = "●●●●●";
+    QString q = GON GON GON GON GON;
     switch(m_sats)
     {
-    case 0: q = "○○○○○"; break;
-    case 1: q = "●○○○○"; break;
-    case 2: q = "●●○○○"; break;
-    case 3: q = "●●●○○"; break;
-    case 4: q = "●●●●○"; break;
+    case 0: q = GOFF GOFF GOFF GOFF GOFF; break;
+    case 1: q = GON  GOFF GOFF GOFF GOFF; break;
+    case 2: q = GON  GON  GOFF GOFF GOFF; break;
+    case 3: q = GON  GON  GON  GOFF GOFF; break;
+    case 4: q = GON  GON  GON  GON  GOFF; break;
     }
     setSat(QString(q.append(" (%1/%2)").arg(m_sats).arg(m_satv)));
 }
 
 
-QString Position::osm()
+QString Position::osm()  // create an OpenStreetMap map URI for last position
 {
-    QString s("http://www.osm.org/?mlat=%1&mlon=%2#map=15/%3/%4");
+    QString s("https://www.osm.org/?mlat=%1&mlon=%2#map=15/%3/%4");
     return s.arg(prec().lat,0,'f',7).arg(prec().lon,0,'f',7).arg(prec().lat,0,'f',5).arg(prec().lon,0,'f',5);
 }
 
@@ -239,13 +244,14 @@ QString Position::osm()
 void Position::bookmark()
 {
     if(m_recs==0) return;
-    prec().flags = true;
+    prec().flags = true;   // flag record as "bookmarked"
     setFlash(true);
     QTimer::singleShot(800, this, SLOT(resetFlash()));
 
+    // insert into clipboard a tweetable string including OSM map and a few extras
     QDateTime t;
     t.setMSecsSinceEpoch(prec().tim);
-    QString sms(" ");
+    QString sms(" ");      // or: "I'm currently here (MyPosition): "
     sms += osm();
     sms += " -- accuracy: %1m -- altitude: %2m -- speed: %3 km/h -- %4";
     QClipboard& c = *QGuiApplication::clipboard();
@@ -253,12 +259,14 @@ void Position::bookmark()
 }
 
 
-void Position::savefile(int flags)
+void Position::save(int flags)
 {
-    QString fname(getenv("HOME"));
-    fname += "/Documents/gps-%1";
+    QString fname(QStandardPaths::displayName(QStandardPaths::DocumentsLocation));
+    fname += "/gps-%1";
     fname = fname.arg(startuptime.toString("yyyyMMdd-hhmmss"));
-    if(flags&1) fname+=".csv"; else fname+=".txt";
+
+    // currently SAVEGPX is not supported
+    if(flags&1) fname += SAVEGPX; else fname += SAVETEXT;
 
     QFile fd(fname);
     if(fd.open(QFile::WriteOnly | QFile::Truncate))
@@ -266,34 +274,28 @@ void Position::savefile(int flags)
         qDebug() << "saving" << m_recs << "records to" << fname;
 
         QTextStream fp(&fd);
-        for(int n=0; n<m_recs; n++)
-        {
-            if(flags&1)
-            {
-                gpsdata[n].csvsave(fp);
-            }
-            else
-            {
-                gpsdata[n].tabsave(fp);
-            }
-        }
+        for(int n=0; n<m_recs; n++) gpsdata[n].save(fp);
     }
     else
     {
         qDebug() << "TREMEND ERROR creating file:" << fname;
 
-        // segnalare errore
+        // maybe we should abort execution here, because
+        // being unable to write in the Documents directory
+        // means that the filesystem is in a quite bad state...
     }
 }
 
 
+// draw a non-proportional 2D projection of latitude/longitude values
 void Position::drawLatLon(QImage& z)
 {
     int x,y,n;
-    if(m_recs < 2) return;
+    if(m_recs < EXCLUDED_FAKE_POSITIONS+1) return;
 
+    // search for maximum and minimum latitude/longitude values
     double m_lon0=99999, m_lat0=99999, m_lonx=-99999, m_latx=-99999;
-    for(n=0;n<m_recs;n++)
+    for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
     {
         if(m_lon0 > gpsdata[n].lon) m_lon0 = gpsdata[n].lon;
         if(m_lat0 > gpsdata[n].lat) m_lat0 = gpsdata[n].lat;
@@ -301,12 +303,14 @@ void Position::drawLatLon(QImage& z)
         if(m_latx < gpsdata[n].lat) m_latx = gpsdata[n].lat;
     }
 
+    // watch out for tiny x/y ranges
     double x0=m_lon0, y0=m_lat0, xr=m_lonx-m_lon0, yr=m_latx-m_lat0;
     if(xr<0.0001) xr=0.0001, x0-=0.00005;
     if(yr<0.0001) yr=0.0001, y0-=0.00005;
 
+    // plot positions in green and "cross" (bookmarks) in white:
     QRgb grn=qRgb(0,255,0), wht=qRgb(255,255,255);
-    for(n=0; n<m_recs; n++)
+    for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
     {
         x = (int)((gpsdata[n].lon-x0)/xr*wg);
         y = hg-(int)((gpsdata[n].lat-y0)/yr*hg);
@@ -329,6 +333,8 @@ void Position::drawLatLon(QImage& z)
     }
 }
 
+
+// build updated image on demand
 
 QImage Position::requestImage(const QString& id, QSize* size, const QSize& requestedSize)
 {
