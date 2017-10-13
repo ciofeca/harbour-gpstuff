@@ -3,17 +3,19 @@
 #ifndef HARBOURGPSTUFF_H
 #define HARBOURGPSTUFF_H
 
-#define SUBVIEWS    4              // total variants in cover.qml
+#define SUBVIEWS    4              // total subview variants in cover.qml
 #define MAXRECORDS  99999          // archive size: more than 24 hours continuous
-#define REFRESHING  4              // seconds before map-refresh
+#define REFRESHING  4              // time (in seconds) before next map-refresh
 #define MINALT      -100           // min acceptable altitude (meters)
 #define MAXALT      21111.111      // max acceptable altitude (meters)
 #define MINSPD      0              // min acceptable speed (m/s)
-#define MAXSPD      533.33333      // max acceptable speed (1920 km/h)
-#define EXCLUDED_FAKE_POSITIONS  3 // Sailfish GPS apparently warms up with up to 3 fake positions
+#define MAXSPD      533.33333      // max acceptable speed (m/s; now 1920 km/h)
+//#define EXCLUDED_FAKE_POSITIONS  3 // Sailfish GPS apparently warms up with up to 3 fake positions
 
 #define PROVIDER    "x"            // image provider used in data.qml
 #define IMGLATLON   "image://" PROVIDER "/1"
+
+#define MYPOSTR     " "            // something like "I'm currently here (MyPosition): "
 
 #define SAVETEXT    ".txt"
 #define SAVEGPX     ".gpx"         // not yet supported
@@ -58,6 +60,14 @@ public:
              arg(hac,0,'f',1).arg(sep).arg(vac,0,'f',1).arg(sep).
              arg(head).arg(sep).arg(flags).arg(endstr);
     }
+
+    void savegpx(QTextStream& s, const char* endstr="")
+    {
+        QString q("<ns0:trkpt lat=\"%1\" lon=\"%2\"><ns0:ele>%3</ns0:ele><time>%4</time></ns0:trkpt>%5");
+        QDateTime t;
+        t.setMSecsSinceEpoch(tim);
+        s << q.arg(lat).arg(lon).arg(alt).arg(t.toString(Qt::ISODate)).arg(endstr);
+    }
 };
 
 
@@ -86,6 +96,8 @@ public:
     explicit Position(int windowwidth, QObject* parent=NULL);
     ~Position() { delete[] gpsdata; gpsdata=NULL; }
 
+    // some ping-pong is needed on properties to only emit a signal when something changed
+    //
     void setLat(const double &l)    { if(l != m_lat)   { m_lat = l;   emit latChanged();   } }
     void setLon(const double &l)    { if(l != m_lon)   { m_lon = l;   emit lonChanged();   } }
     void setAlt(const int& s)       { if(s != m_alt)   { m_alt = s;   emit altChanged();   } }
@@ -175,7 +187,7 @@ public slots:
 };
 
 
-// special characters used for GPS satellites ON/OFF strings:
+// special UTF-8 characters used for GPS satellites ON/OFF strings:
 #define GON  "\xe2\x97\x8f"
 #define GOFF "\xe2\x97\x8b"
 

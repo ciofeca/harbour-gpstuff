@@ -14,7 +14,7 @@ Name:       harbour-gpstuff
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    GPStuff
 Version:    0.9
-Release:    7
+Release:    20
 Group:      Location/Location Adaptation
 License:    GPL
 URL:        https://particolarmente-urgentissimo.blogspot.com
@@ -29,7 +29,7 @@ BuildRequires:  pkgconfig(Qt5Positioning)
 BuildRequires:  desktop-file-utils
 
 %description
-GPS logger: shows/collects positioning data, also in background, can save in a textfile.
+GPS logger: shows/collects positioning data, also in background, can save to a textfile.
 
 
 %prep
@@ -71,5 +71,8 @@ desktop-file-install --delete-original       \
 %{_datadir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/86x86/apps/%{name}.png
+%{_datadir}/icons/hicolor/108x108/apps/%{name}.png
+%{_datadir}/icons/hicolor/128x128/apps/%{name}.png
+%{_datadir}/icons/hicolor/256x256/apps/%{name}.png
 # >> files
 # << files

@@ -39,12 +39,17 @@ int main(int argc, char* argv[])  // typical SailfishApp create/view/exec initia
     view->setSource(SailfishApp::pathTo(path));
     view->show();
     view->showFullScreen();
-    exit(app->exec());       // arrrgh, because of a requestImage QImage bugggg!
+
+    // cannot cleanly "return app->exec()" because of 
+    // a weird "double free or corruption (out): 0xffa310d8" error
+    // happening in QImage (requestImage) at least up to SailfishOS 2.1.3
+    //
+    exit(app->exec());
     return 0;
 }
 
 
-Position::Position(int wid, QObject* parent):
+Position::Position(int displaywidth, QObject* parent):
     QObject(parent), QQuickImageProvider(QQuickImageProvider::Image),
     m_lat(444.777), m_lon(444.333), m_spd(0.0), m_spdx(0.0), m_hac(0.0), m_vac(0.0),
     m_alt(0), m_altx(0), m_head(0), m_sats(0), m_satv(0), m_recs(0), m_run(0),
@@ -52,8 +57,8 @@ Position::Position(int wid, QObject* parent):
 {
     gpsdata = new GPSdata[MAXRECORDS];
     setImg(IMGLATLON);
-    wg = wid;                // a 4:3 area; works best on vertical displays
-    hg = (wg/4)*3;
+    wg = displaywidth;
+    hg = (wg/4)*3;           // a 4:3 area; works best on vertical displays
     startuptime = QDateTime::currentDateTime();
     uptime.start();
     coverSubview();
@@ -66,15 +71,15 @@ Position::Position(int wid, QObject* parent):
         if(satsrc)
         {
             connect(satsrc, SIGNAL(satellitesInUseUpdated(const QList<QGeoSatelliteInfo>&)),
-                    this,   SLOT(satellitesInUseUpdated(const QList<QGeoSatelliteInfo>&)));
+                    this,     SLOT(satellitesInUseUpdated(const QList<QGeoSatelliteInfo>&)));
             connect(satsrc, SIGNAL(satellitesInViewUpdated(const QList<QGeoSatelliteInfo>&)),
-                    this,   SLOT(satellitesInViewUpdated(const QList<QGeoSatelliteInfo>&)));
+                    this,     SLOT(satellitesInViewUpdated(const QList<QGeoSatelliteInfo>&)));
 
             satsrc->startUpdates();
             satsrc->setUpdateInterval(1000); // msec
         }
         connect(geosrc, SIGNAL(positionUpdated(QGeoPositionInfo)),
-                this, SLOT(positionUpdated(QGeoPositionInfo)));
+                this,     SLOT(positionUpdated(QGeoPositionInfo)));
 
         geosrc->startUpdates();
         geosrc->setUpdateInterval(1000); // msec
@@ -100,7 +105,7 @@ QString Position::elapsed()  // current date/time and elapsed time
 }
 
 
-void Position::startstop()
+void Position::startstop()   // toggle GPS updates
 {
     if(geosrc)
     {
@@ -128,7 +133,9 @@ void Position::coverSubview()   // switch to next Cover subview
 }
 
 
-void Position::positionUpdated(const QGeoPositionInfo &info)  // validate and update
+// when a new GPS position comes in: validate and update
+//
+void Position::positionUpdated(const QGeoPositionInfo &info)
 {
     double r, lat, lon;
     if(info.coordinate().isValid())
@@ -168,7 +175,7 @@ void Position::positionUpdated(const QGeoPositionInfo &info)  // validate and up
         r = info.attribute(QGeoPositionInfo::MagneticVariation);
         if(std::isnormal(r))
         {
-            // note: as of June 2015, Sailfish OS does not yet support heading
+            // note: as of June 2015, Jolla phone does not yet support heading
             setHead((int)r);
             int u = (int)((r-22.5)/45.0);
             switch(u)
@@ -205,14 +212,15 @@ void Position::positionUpdated(const QGeoPositionInfo &info)  // validate and up
 void Position::satellitesInUseUpdated(const QList<QGeoSatelliteInfo>& info)
 {
     setSats(info.size());
-    QString q = GON GON GON GON GON;
+    QString q;
     switch(m_sats)
     {
-    case 0: q = GOFF GOFF GOFF GOFF GOFF; break;
-    case 1: q = GON  GOFF GOFF GOFF GOFF; break;
-    case 2: q = GON  GON  GOFF GOFF GOFF; break;
-    case 3: q = GON  GON  GON  GOFF GOFF; break;
-    case 4: q = GON  GON  GON  GON  GOFF; break;
+    case 0:  q = GOFF GOFF GOFF GOFF GOFF; break;  // no satellites in use
+    case 1:  q = GON  GOFF GOFF GOFF GOFF; break;  // 1 satellite in use
+    case 2:  q = GON  GON  GOFF GOFF GOFF; break;
+    case 3:  q = GON  GON  GON  GOFF GOFF; break;
+    case 4:  q = GON  GON  GON  GON  GOFF; break;  // 4 satellites in use
+    default: q = GON  GON  GON  GON  GON;  break;  // plenty of satellites
     }
     setSat(QString(q.append(" (%1/%2)").arg(m_sats).arg(m_satv)));
 }
@@ -221,14 +229,15 @@ void Position::satellitesInUseUpdated(const QList<QGeoSatelliteInfo>& info)
 void Position::satellitesInViewUpdated(const QList<QGeoSatelliteInfo> &info)
 {
     setSatv(info.size());
-    QString q = GON GON GON GON GON;
+    QString q;
     switch(m_sats)
     {
-    case 0: q = GOFF GOFF GOFF GOFF GOFF; break;
-    case 1: q = GON  GOFF GOFF GOFF GOFF; break;
-    case 2: q = GON  GON  GOFF GOFF GOFF; break;
-    case 3: q = GON  GON  GON  GOFF GOFF; break;
-    case 4: q = GON  GON  GON  GON  GOFF; break;
+    case 0:  q = GOFF GOFF GOFF GOFF GOFF; break;  // no satellites in use
+    case 1:  q = GON  GOFF GOFF GOFF GOFF; break;  // 1 satellite in use
+    case 2:  q = GON  GON  GOFF GOFF GOFF; break;
+    case 3:  q = GON  GON  GON  GOFF GOFF; break;
+    case 4:  q = GON  GON  GON  GON  GOFF; break;  // 4 satellites in use
+    default: q = GON  GON  GON  GON  GON;  break;  // plenty of satellites
     }
     setSat(QString(q.append(" (%1/%2)").arg(m_sats).arg(m_satv)));
 }
@@ -237,7 +246,8 @@ void Position::satellitesInViewUpdated(const QList<QGeoSatelliteInfo> &info)
 QString Position::osm()  // create an OpenStreetMap map URI for last position
 {
     QString s("https://www.osm.org/?mlat=%1&mlon=%2#map=15/%3/%4");
-    return s.arg(prec().lat,0,'f',7).arg(prec().lon,0,'f',7).arg(prec().lat,0,'f',5).arg(prec().lon,0,'f',5);
+    return s.arg(prec().lat,0,'f',7).arg(prec().lon,0,'f',7).
+             arg(prec().lat,0,'f',5).arg(prec().lon,0,'f',5);
 }
 
 
@@ -245,23 +255,27 @@ void Position::bookmark()
 {
     if(m_recs==0) return;
     prec().flags = true;   // flag record as "bookmarked"
-    setFlash(true);
-    QTimer::singleShot(800, this, SLOT(resetFlash()));
+
+    setFlash(true);        // "flash" the screen text indicato rfor a while
+    QTimer::singleShot(800, this, SLOT(resetFlash()));  // schedule the "unflash"
 
     // insert into clipboard a tweetable string including OSM map and a few extras
     QDateTime t;
     t.setMSecsSinceEpoch(prec().tim);
-    QString sms(" ");      // or: "I'm currently here (MyPosition): "
+    QString sms(MYPOSTR);  // something like "I'm currently here (MyPosition): "
     sms += osm();
     sms += " -- accuracy: %1m -- altitude: %2m -- speed: %3 km/h -- %4";
     QClipboard& c = *QGuiApplication::clipboard();
-    c.setText(sms.arg((int)(prec().hac)).arg(prec().alt).arg(prec().spd,0,'f',1).arg(t.toString("hh:mm:ss")));
+    c.setText(sms.arg((int)(prec().hac)).arg(prec().alt).
+                  arg(prec().spd,0,'f',1).arg(t.toString("hh:mm:ss")));
 }
 
 
+// save in Documents location the current positions
+//
 void Position::save(int flags)
 {
-    QString fname(QStandardPaths::displayName(QStandardPaths::DocumentsLocation));
+    QString fname(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     fname += "/gps-%1";
     fname = fname.arg(startuptime.toString("yyyyMMdd-hhmmss"));
 
@@ -274,7 +288,23 @@ void Position::save(int flags)
         qDebug() << "saving" << m_recs << "records to" << fname;
 
         QTextStream fp(&fd);
+
+        if(flags&1)   // GPX prefix?
+        {
+            QString q("<ns0:gpx xmlns:ns0=\"http://www.topografix.com/GPX/1/1\">\
+                       <ns0:metadata><ns0:time>%1</ns0:time><ns0:bounds \
+                       maxlat=\"%2\" maxlon=\"%3\" minlat=\"%4\" minlon=\"%5\" />\
+                       </ns0:metadata><ns0:trk><ns0:trkseg>");
+            // TODO: extract first timestamp and min/max latitude/longitude
+            fp << q;
+        }
+
         for(int n=0; n<m_recs; n++) gpsdata[n].save(fp);
+
+        if(flags&1)   // GPX footer?
+        {
+            fp << "</ns0:trkseg></ns0:trk></ns0:gpx>\n";
+        }
     }
     else
     {
@@ -288,20 +318,26 @@ void Position::save(int flags)
 
 
 // draw a non-proportional 2D projection of latitude/longitude values
+//
 void Position::drawLatLon(QImage& z)
 {
     int x,y,n;
-    if(m_recs < EXCLUDED_FAKE_POSITIONS+1) return;
+    //if(m_recs < EXCLUDED_FAKE_POSITIONS+1) return;
 
-    // search for maximum and minimum latitude/longitude values
-    double m_lon0=99999, m_lat0=99999, m_lonx=-99999, m_latx=-99999;
-    for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
+    // adjust maximum and minimum latitude/longitude values
+    double m_lon0=999, m_lat0=999, m_lonx=-999, m_latx=-999;
+    //for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
+    for(n = 0;  n < m_recs;  n++)
     {
+        if(gpsdata[n].sat < 3) continue;
         if(m_lon0 > gpsdata[n].lon) m_lon0 = gpsdata[n].lon;
         if(m_lat0 > gpsdata[n].lat) m_lat0 = gpsdata[n].lat;
         if(m_lonx < gpsdata[n].lon) m_lonx = gpsdata[n].lon;
         if(m_latx < gpsdata[n].lat) m_latx = gpsdata[n].lat;
     }
+
+    // return if we don't have yet reasonable values
+    if((fabs(m_lon0) > 888) || (fabs(m_lat0) > 888)) return;
 
     // watch out for tiny x/y ranges
     double x0=m_lon0, y0=m_lat0, xr=m_lonx-m_lon0, yr=m_latx-m_lat0;
@@ -310,7 +346,8 @@ void Position::drawLatLon(QImage& z)
 
     // plot positions in green and "cross" (bookmarks) in white:
     QRgb grn=qRgb(0,255,0), wht=qRgb(255,255,255);
-    for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
+    //for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
+    for(n = 0;  n < m_recs;  n++)
     {
         x = (int)((gpsdata[n].lon-x0)/xr*wg);
         y = hg-(int)((gpsdata[n].lat-y0)/yr*hg);
@@ -335,7 +372,7 @@ void Position::drawLatLon(QImage& z)
 
 
 // build updated image on demand
-
+//
 QImage Position::requestImage(const QString& id, QSize* size, const QSize& requestedSize)
 {
     pix = QImage(wg, hg, QImage::Format_ARGB32_Premultiplied);
@@ -346,14 +383,8 @@ QImage Position::requestImage(const QString& id, QSize* size, const QSize& reque
 
     switch(n)
     {
-    case LATLON:
-        pix.fill(blk);
-        drawLatLon(pix);
-        break;
-
-    default:
-        pix.fill(red);
-        break;
+    case LATLON:  pix.fill(blk); drawLatLon(pix); break;
+    default:      pix.fill(red);                  break;
     }
 
     if(size) *size = pix.size();

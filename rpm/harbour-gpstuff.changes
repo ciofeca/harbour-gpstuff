@@ -2,6 +2,9 @@
 # * date Author's Name <author's email> version-release
 # - Summary of changes
 
+* Thu Oct 13 2017 Alfonso Martone <alfonso.martone@gmail.com> 0.9-20
+- minor updates and Sailfish X tests
+
 * Thu Aug 03 2017 Alfonso Martone <alfonso.martone@gmail.com> 0.9-8
 - converted every link to https; minor updates; added comments (SDK 1707)
 

@@ -1,7 +1,7 @@
 Name: harbour-gpstuff
 Summary: GPStuff
 Version: 0.9
-Release: 7
+Release: 20
 Group: Location/Location Adaptation
 URL: https://particolarmente-urgentissimo.blogspot.com
 License: GPL
@@ -32,5 +32,8 @@ Files:
   - '%{_datadir}/%{name}'
   - '%{_datadir}/applications/%{name}.desktop'
   - '%{_datadir}/icons/hicolor/86x86/apps/%{name}.png'
+  - '%{_datadir}/icons/hicolor/108x108/apps/%{name}.png'
+  - '%{_datadir}/icons/hicolor/128x128/apps/%{name}.png'
+  - '%{_datadir}/icons/hicolor/256x256/apps/%{name}.png'
 
 #---
