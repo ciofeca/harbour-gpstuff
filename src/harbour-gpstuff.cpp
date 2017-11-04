@@ -49,20 +49,28 @@ int main(int argc, char* argv[])  // typical SailfishApp create/view/exec initia
 }
 
 
+// main class setup
+//
 Position::Position(int displaywidth, QObject* parent):
     QObject(parent), QQuickImageProvider(QQuickImageProvider::Image),
-    m_lat(444.777), m_lon(444.333), m_spd(0.0), m_spdx(0.0), m_hac(0.0), m_vac(0.0),
+    m_lat(444.555), m_lon(444.666), m_spd(0.0), m_spdx(0.0), m_hac(0.0), m_vac(0.0),
+    m_lon0(444.111), m_lat0(444.222), m_lonx(-444.333), m_latx(-444.444),
     m_alt(0), m_altx(0), m_head(0), m_sats(0), m_satv(0), m_recs(0), m_run(0),
     m_subv(SUBVIEWS), m_flash(0), m_coord(" "), m_sat(" "), m_dir(" "), m_img(" "), gpsdata(NULL)
 {
+    startuptime = QDateTime::currentDateTime();
+    m_utc = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+    uptime.start();
+
     gpsdata = new GPSdata[MAXRECORDS];
     setImg(IMGLATLON);
+
     wg = displaywidth;
     hg = (wg/4)*3;           // a 4:3 area; works best on vertical displays
-    startuptime = QDateTime::currentDateTime();
-    uptime.start();
     coverSubview();
 
+    // hook the location provider
+    //
     geosrc = QGeoPositionInfoSource::createDefaultSource(this);
     if(geosrc)
     {
@@ -76,13 +84,14 @@ Position::Position(int displaywidth, QObject* parent):
                     this,     SLOT(satellitesInViewUpdated(const QList<QGeoSatelliteInfo>&)));
 
             satsrc->startUpdates();
-            satsrc->setUpdateInterval(1000); // msec
+            satsrc->setUpdateInterval(1000); // require updates every 1000 msec
         }
+
         connect(geosrc, SIGNAL(positionUpdated(QGeoPositionInfo)),
                 this,     SLOT(positionUpdated(QGeoPositionInfo)));
 
         geosrc->startUpdates();
-        geosrc->setUpdateInterval(1000); // msec
+        geosrc->setUpdateInterval(1000);    // msec
 
         setRun(1);
     }
@@ -138,15 +147,30 @@ void Position::coverSubview()   // switch to next Cover subview
 void Position::positionUpdated(const QGeoPositionInfo &info)
 {
     double r, lat, lon;
+
+    // we log anything claiming to have valid coordinates
+    //
     if(info.coordinate().isValid())
     {
-        lat = info.coordinate().latitude();
-        lon = info.coordinate().longitude();
+        // fetch latitude/longitude but truncate to six decimal digits
+        lat = floor(info.coordinate().latitude() *1000000.0)/1000000.0;
+        lon = floor(info.coordinate().longitude()*1000000.0)/1000000.0;
         last().setup(lat, lon, info.timestamp().isValid() ?
                          info.timestamp().toMSecsSinceEpoch() : 0);
 
-        setLat(floor(lat*1000000.0)/1000000.0);
-        setLon(floor(lon*1000000.0)/1000000.0);
+        // update the bounding box only if enough satellites in use
+        if(m_sats >= 3)
+        {
+            if(m_lon0 > lon) m_lon0 = lon;
+            if(m_lat0 > lat) m_lat0 = lat;
+            if(m_lonx < lon) m_lonx = lon;
+            if(m_latx < lat) m_latx = lat;
+        }
+
+        // update the current record
+        //
+        setLat(lat);
+        setLon(lon);
 
         r = info.attribute(QGeoPositionInfo::HorizontalAccuracy);
         if(std::isnormal(r) && r>0.0 && r<9999.555) m_hac=r; else m_hac=0.0;
@@ -165,17 +189,17 @@ void Position::positionUpdated(const QGeoPositionInfo &info)
         r = info.attribute(QGeoPositionInfo::GroundSpeed);
         if(std::isnormal(r) && r>=MINSPD && r<MAXSPD)
         {
-            setSpd(floor(r*36.0)/10.0);  // m/s ---> km/h
+            setSpd(floor(r*36.0)/10.0); // convert m/s to km/hr with single decimal digit
             setSpdx(m_spd);
             last().spd = m_spd;
         }
 
-        last().sat = m_sats;
+        last().sat = m_satv;
 
         r = info.attribute(QGeoPositionInfo::MagneticVariation);
         if(std::isnormal(r))
         {
-            // note: as of June 2015, Jolla phone does not yet support heading
+            // note: Jolla phone and XperiaX GPS libraries do not yet support heading (magnetic variation)
             setHead((int)r);
             int u = (int)((r-22.5)/45.0);
             switch(u)
@@ -273,44 +297,51 @@ void Position::bookmark()
 
 // save in Documents location the current positions
 //
-void Position::save(int flags)
+void Position::save(int gpxmode)
 {
     QString fname(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     fname += "/gps-%1";
     fname = fname.arg(startuptime.toString("yyyyMMdd-hhmmss"));
 
-    // currently SAVEGPX is not supported
-    if(flags&1) fname += SAVEGPX; else fname += SAVETEXT;
+    if(gpxmode) fname += SAVEGPX; else fname += SAVETEXT;
 
     QFile fd(fname);
     if(fd.open(QFile::WriteOnly | QFile::Truncate))
     {
         qDebug() << "saving" << m_recs << "records to" << fname;
-
+        int n;
         QTextStream fp(&fd);
 
-        if(flags&1)   // GPX prefix?
+        if(gpxmode)
         {
-            QString q("<ns0:gpx xmlns:ns0=\"http://www.topografix.com/GPX/1/1\">\
-                       <ns0:metadata><ns0:time>%1</ns0:time><ns0:bounds \
-                       maxlat=\"%2\" maxlon=\"%3\" minlat=\"%4\" minlon=\"%5\" />\
-                       </ns0:metadata><ns0:trk><ns0:trkseg>");
-            // TODO: extract first timestamp and min/max latitude/longitude
-            fp << q;
+            QString hdr("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<gpx version=\"1.0\">"
+                        "<name>GPStuff %1</name>\n");
+            fp << hdr.arg(m_utc);
+
+            for(n=0; n<m_recs; n++)
+            {
+                if(gpsdata[n].flags)    // bookmarked positions are saved as "waypoints"
+                {
+                    QString q("<wpt lat=\"%1\" lon=\"%2\"><ele>%3</ele><name>+</name></wpt>\n");
+                    fp << q.arg(gpsdata[n].lat,0,'f',7).arg(gpsdata[n].lon,0,'f',7).arg(gpsdata[n].alt);
+                }
+            }
+
+            fp << "<trk><name>track</name><number>1</number><trkseg>\n";
+
+            for(n=0; n<m_recs; n++) gpsdata[n].savegpx(fp);
+
+            fp << "</trkseg></trk>\n</gpx>\n";
         }
-
-        for(int n=0; n<m_recs; n++) gpsdata[n].save(fp);
-
-        if(flags&1)   // GPX footer?
+        else
         {
-            fp << "</ns0:trkseg></ns0:trk></ns0:gpx>\n";
+          for(int n=0; n<m_recs; n++) gpsdata[n].save(fp);
         }
     }
     else
     {
         qDebug() << "TREMEND ERROR creating file:" << fname;
-
-        // maybe we should abort execution here, because
+        exit(1);
         // being unable to write in the Documents directory
         // means that the filesystem is in a quite bad state...
     }
@@ -322,40 +353,34 @@ void Position::save(int flags)
 void Position::drawLatLon(QImage& z)
 {
     int x,y,n;
-    //if(m_recs < EXCLUDED_FAKE_POSITIONS+1) return;
-
-    // adjust maximum and minimum latitude/longitude values
-    double m_lon0=999, m_lat0=999, m_lonx=-999, m_latx=-999;
-    //for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
-    for(n = 0;  n < m_recs;  n++)
-    {
-        if(gpsdata[n].sat < 3) continue;
-        if(m_lon0 > gpsdata[n].lon) m_lon0 = gpsdata[n].lon;
-        if(m_lat0 > gpsdata[n].lat) m_lat0 = gpsdata[n].lat;
-        if(m_lonx < gpsdata[n].lon) m_lonx = gpsdata[n].lon;
-        if(m_latx < gpsdata[n].lat) m_latx = gpsdata[n].lat;
-    }
 
     // return if we don't have yet reasonable values
-    if((fabs(m_lon0) > 888) || (fabs(m_lat0) > 888)) return;
+    if(noboxyet()) return;
 
     // watch out for tiny x/y ranges
     double x0=m_lon0, y0=m_lat0, xr=m_lonx-m_lon0, yr=m_latx-m_lat0;
     if(xr<0.0001) xr=0.0001, x0-=0.00005;
     if(yr<0.0001) yr=0.0001, y0-=0.00005;
 
-    // plot positions in green and "cross" (bookmarks) in white:
+    // plot positions will be in green, bookmarked ones in white:
     QRgb grn=qRgb(0,255,0), wht=qRgb(255,255,255);
-    //for(n=EXCLUDED_FAKE_POSITIONS; n<m_recs; n++)
-    for(n = 0;  n < m_recs;  n++)
+
+    bool nodraw = true;
+    for(n=0; n<m_recs; n++)
     {
+        // don't draw anything until a real GPS position is available
+        if(gpsdata[n].sat >= 3) nodraw = false;
+        if(nodraw) continue;
+
+        // fetch coordinates and sanitize
         x = (int)((gpsdata[n].lon-x0)/xr*wg);
         y = hg-(int)((gpsdata[n].lat-y0)/yr*hg);
         if(x<0) x=0;
         if(x>=wg) x=wg-1;
         if(y<0) y=0;
         if(y>=hg) y=hg-1;
-        if(gpsdata[n].flags & 1)
+
+        if(gpsdata[n].flags & 1)        // bookmarked?
         {
             z.setPixel(x,             y,   wht);
             if(x>0)    z.setPixel(x-1,y,   wht);

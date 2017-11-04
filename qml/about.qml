@@ -127,8 +127,13 @@ and <i>graph</i> plot of the collected position data (green pixels, or white if 
 <li>invalid values will always be zero.</li>
 </ul>
 <h3 align='center'><i>→ Will it drain my battery?</i></h3>
-<ul><li>yes, depending on the <i>Settings →→ Location →→ Accuracy</i> features you chose to enable.</li>
-<li></li>
+<ul><li>yes, depending on the <i>Settings →→ Location →→ Accuracy</i> features you chose to enable
+(if you want useful data to save, at least <i>Device-only mode</i> should be set).</li>
+</ul>
+<h3 align='center'><i>→ Do I need to save GPX or TXT?</i></h3>
+<ul><li>GPX files do not include speed, accuracy, and other fields.</li>
+<li>GPX is only offered for compatibility with other software.</li>
+<li>you can only save GPX from position graph page - this is intentional.</li>
 </ul>
 <h3 align='center'><i>→ Does it support maps services?</i></h3>
 <ul><li>no.</li>

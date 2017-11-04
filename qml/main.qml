@@ -23,7 +23,7 @@ Page
             {
                 signal save()
                 text: qsTr("Save textfile into Documents")
-                enabled: GPS.recs>0
+                enabled: GPS.recs>1
                 onClicked: GPS.save(0)
             }
 
@@ -122,7 +122,7 @@ Page
                 width: page.width-Theme.paddingLarge*2
                 anchors.topMargin: Theme.paddingLarge
                 text: qsTr("Position graph")
-                enabled: GPS.recs>3
+                enabled: GPS.recs>1
                 onClicked: pageStack.push(Qt.resolvedUrl("data.qml"))
             }
         }

@@ -14,7 +14,7 @@ Name:       harbour-gpstuff
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    GPStuff
 Version:    0.9
-Release:    20
+Release:    31
 Group:      Location/Location Adaptation
 License:    GPL
 URL:        https://particolarmente-urgentissimo.blogspot.com

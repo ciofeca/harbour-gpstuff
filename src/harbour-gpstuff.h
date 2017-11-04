@@ -10,7 +10,6 @@
 #define MAXALT      21111.111      // max acceptable altitude (meters)
 #define MINSPD      0              // min acceptable speed (m/s)
 #define MAXSPD      533.33333      // max acceptable speed (m/s; now 1920 km/h)
-//#define EXCLUDED_FAKE_POSITIONS  3 // Sailfish GPS apparently warms up with up to 3 fake positions
 
 #define PROVIDER    "x"            // image provider used in data.qml
 #define IMGLATLON   "image://" PROVIDER "/1"
@@ -18,7 +17,7 @@
 #define MYPOSTR     " "            // something like "I'm currently here (MyPosition): "
 
 #define SAVETEXT    ".txt"
-#define SAVEGPX     ".gpx"         // not yet supported
+#define SAVEGPX     ".gpx"
 
 #include <QDebug>
 #include <QObject>
@@ -61,12 +60,12 @@ public:
              arg(head).arg(sep).arg(flags).arg(endstr);
     }
 
-    void savegpx(QTextStream& s, const char* endstr="")
+    void savegpx(QTextStream& s, const char* endstr="\n")
     {
-        QString q("<ns0:trkpt lat=\"%1\" lon=\"%2\"><ns0:ele>%3</ns0:ele><time>%4</time></ns0:trkpt>%5");
+        QString q("<trkpt lat=\"%1\" lon=\"%2\"><ele>%3</ele><time>%4</time></trkpt>%5");
         QDateTime t;
         t.setMSecsSinceEpoch(tim);
-        s << q.arg(lat).arg(lon).arg(alt).arg(t.toString(Qt::ISODate)).arg(endstr);
+        s << q.arg(lat,0,'f',7).arg(lon,0,'f',7).arg(alt).arg(t.toString(Qt::ISODate)).arg(endstr);
     }
 };
 
@@ -134,6 +133,10 @@ public:
     QString coord() const { return m_coord; }  // coordinates text
     QString img()   const { return m_img;   }  // map image to provide
 
+    // returns true if we don't have yet a bounding box for coordinates
+    bool    noboxyet()    { return (fabs(m_lat0) > 400.0) || (fabs(m_lon0) > 400.0) ||
+                                   (fabs(m_latx) > 400.0) || (fabs(m_lonx) > 400.0); }
+
     Q_INVOKABLE QString elapsed();             // elapsed time
     Q_INVOKABLE QString osm();                 // map link on openstreetmap.org
 
@@ -160,8 +163,9 @@ signals:
 
 private:
     double m_lat, m_lon, m_spd, m_spdx, m_hac, m_vac;
+    double m_lon0, m_lat0, m_lonx, m_latx;
     int m_alt, m_altx, m_head, m_sats, m_satv, m_recs, m_run, m_subv, m_flash;
-    QString m_coord, m_sat, m_dir, m_img;
+    QString m_coord, m_sat, m_dir, m_img, m_utc;
     QDateTime startuptime;
     QElapsedTimer uptime;
     QGeoPositionInfoSource* geosrc;

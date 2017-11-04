@@ -29,6 +29,14 @@ Page
 
             MenuItem
             {
+                signal save()
+                text: qsTr("Save GPX file into Documents")
+                enabled: GPS.recs>0
+                onClicked: GPS.save(1)
+            }
+
+            MenuItem
+            {
                 signal startstop()
                 text: GPS.run ? qsTr("Stop GPS") : qsTr("Restart GPS")
                 onClicked: GPS.startstop()
@@ -91,7 +99,7 @@ Page
                 x: Theme.paddingLarge
                 width: data.width-Theme.paddingLarge*2
                 anchors.topMargin: Theme.paddingLarge*2
-                enabled: GPS.recs>3
+                enabled: GPS.recs>0
                 onClicked: Qt.openUrlExternally(GPS.osm())
             }
         }

@@ -2,7 +2,10 @@
 # * date Author's Name <author's email> version-release
 # - Summary of changes
 
-* Thu Oct 13 2017 Alfonso Martone <alfonso.martone@gmail.com> 0.9-20
+* Sun Nov 04 2017 Alfonso Martone <alfonso.martone@gmail.com> 0.9-31
+- added GPX 1.0 save format
+
+* Fri Oct 13 2017 Alfonso Martone <alfonso.martone@gmail.com> 0.9-20
 - minor updates and Sailfish X tests
 
 * Thu Aug 03 2017 Alfonso Martone <alfonso.martone@gmail.com> 0.9-8
@@ -18,7 +21,7 @@
 - do not "map" initial fake GPS positions
 
 * Mon Jan 06 2015 Alfonso Martone <alfonso.martone@gmail.com> 0.8-39
-- upgrade to SailfishOS 1.1 (SDK 1412), still requires manual installation of libQt5Positioning
+- upgrade to SailfishOS 1.1 (SDK 1412), still requires manual installation of libQt5Positioning/libQt5Location
 
 * Tue Nov 04 2014 Alfonso Martone <alfonso.martone@gmail.com> 0.1-8
-- it works! let's wait for libQt5Positioning enabled in Jolla...
+- it works! let's wait for libQt5Positioning/libQt5Location enabled in Jolla...
