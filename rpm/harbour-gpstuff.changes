@@ -2,6 +2,9 @@
 # * date Author's Name <author's email> version-release
 # - Summary of changes
 
+* Tue Jan 16 2018 Alfonso Martone <alfonso.martone@gmail.com> 1.0-0
+- disabled GPX and proposed to Jolla store
+
 * Sun Nov 04 2017 Alfonso Martone <alfonso.martone@gmail.com> 0.9-31
 - added GPX 1.0 save format
 

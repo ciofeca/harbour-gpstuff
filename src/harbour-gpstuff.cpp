@@ -29,7 +29,7 @@ int main(int argc, char* argv[])  // typical SailfishApp create/view/exec initia
     app->setApplicationVersion(vers);
     app->setOrganizationName(org);
 
-    // the constructor expects a vertically-aligned display width:
+    // the constructor expects a portrait-aligned display width:
     Position gps(app->screens().first()->availableSize().width());
 
     QScopedPointer<QQuickView> view(SailfishApp::createView());

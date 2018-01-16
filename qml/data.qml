@@ -29,14 +29,6 @@ Page
 
             MenuItem
             {
-                signal save()
-                text: qsTr("Save GPX file into Documents")
-                enabled: GPS.recs>0
-                onClicked: GPS.save(1)
-            }
-
-            MenuItem
-            {
                 signal startstop()
                 text: GPS.run ? qsTr("Stop GPS") : qsTr("Restart GPS")
                 onClicked: GPS.startstop()

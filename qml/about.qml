@@ -130,11 +130,6 @@ and <i>graph</i> plot of the collected position data (green pixels, or white if 
 <ul><li>yes, depending on the <i>Settings →→ Location →→ Accuracy</i> features you chose to enable
 (if you want useful data to save, at least <i>Device-only mode</i> should be set).</li>
 </ul>
-<h3 align='center'><i>→ Do I need to save GPX or TXT?</i></h3>
-<ul><li>GPX files do not include speed, accuracy, and other fields.</li>
-<li>GPX is only offered for compatibility with other software.</li>
-<li>you can only save GPX from position graph page - this is intentional.</li>
-</ul>
 <h3 align='center'><i>→ Does it support maps services?</i></h3>
 <ul><li>no.</li>
 <li>This is a GPS position logger only. The graph map only plots in a flat plane the positioning data
